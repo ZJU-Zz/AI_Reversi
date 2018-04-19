@@ -325,7 +325,7 @@ void QtGuiApplication3::insertRoot()
 Point QtGuiApplication3::UctSearch()
 {
 	TreeNode current(test->getPlaying(), test->getBoard(), test->getBoard(), 0, 0, 0);
-	QTime reachTime = QTime::currentTime().addMSecs(1000 * 30);
+	QTime reachTime = QTime::currentTime().addMSecs(1000 * 10);
 	int count = 0;
 	while (QTime::currentTime() < reachTime)
 	{
