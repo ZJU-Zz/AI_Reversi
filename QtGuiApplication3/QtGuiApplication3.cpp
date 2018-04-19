@@ -31,6 +31,7 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 	setWindowTitle("Chess");//设置窗口标题
 	showView();
 
+
 	//Type win = test->autoRandomPlay();
 	//showView();
 	//addChess(10, 10, win);
@@ -53,6 +54,7 @@ void QtGuiApplication3::run()
 		if (nextPlay.x != -1) {
 			vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
 			test->doPlay(tt, nextPlay.x, nextPlay.y);
+			emit viewChanged();
 			//showView();
 		}
 		else
@@ -64,6 +66,7 @@ void QtGuiApplication3::run()
 			}
 			else {
 				test->reversePlaying();
+				emit viewChanged();
 				//showView();
 			}
 		}

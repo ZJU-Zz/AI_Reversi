@@ -20,9 +20,10 @@ struct point
 	int y;
 };
 
-class QtGuiApplication3 : public QMainWindow ,public QThread
+class QtGuiApplication3 : public QMainWindow ,public QThread , public QObject
 {
 	Q_OBJECT
+
 
 public:
 	QtGuiApplication3(QWidget *parent = Q_NULLPTR);
@@ -48,6 +49,10 @@ public:
 	void backUp(TreeNode next,Type win);
 	Point getBestChild(unsigned int total, double value[][8],unsigned int playTime[][8]);
 	ReversiBoard* test;
+
+signals:
+	void viewChanged();
+
 private:
 	double C = sqrt(2);
 	QGraphicsScene * scene;
