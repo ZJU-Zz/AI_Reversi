@@ -31,17 +31,6 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 	setWindowTitle("Chess");//设置窗口标题
 	showView();
 
-
-	//Type win = test->autoRandomPlay();
-	//showView();
-	//addChess(10, 10, win);
-	//cout << "white" << test->getCount(WHITE) << endl;
-	//cout << "black" << test->getCount(BLACK) << endl;
-
-	//test->autoRandomPlayOneStep();
-	//showView();
-	//sleep(1000);
-	//temptest();
 }
 
 
@@ -60,14 +49,12 @@ void QtGuiApplication3::run()
 		else
 		{
 			if (test->isLeaf()) {
-				//QMessageBox::information(this, "Title", "End");
-				//test->reset();
+				emit gameOver();
 				break;
 			}
 			else {
 				test->reversePlaying();
 				emit viewChanged();
-				//showView();
 			}
 		}
 	}
@@ -110,9 +97,6 @@ void QtGuiApplication3::mousePressEvent(QMouseEvent *e)
 			{
 				test->doPlay(temp, m, n);
 				showView();
-				//sleep(1000);
-				//test->autoRandomPlayOneStep();
-				//showView();
 			}
 			//添加黑棋  
 		}
@@ -123,16 +107,10 @@ void QtGuiApplication3::mousePressEvent(QMouseEvent *e)
 			{
 				test->doPlay(temp, m, n);
 				showView();
-				//sleep(1000);
-				//test->autoRandomPlayOneStep();
-				//showView();
 			}
 			//添加白棋  
 		}
-	}
-	//Sleep(1000);
-//	palyer = !palyer;//转换黑白棋子  
-//	Win();//判断输赢  
+	} 
 }
 
 void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
@@ -140,7 +118,7 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 	if (event->key() == Qt::Key_P)
 	{
 		if (test->isEnd()) {
-			QMessageBox::information(this, "Title", "End");
+			emit gameOver();
 			reset();
 		}
 		else
@@ -162,7 +140,7 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 		else
 		{
 			if (test->isLeaf()) {
-				QMessageBox::information(this, "Title", "End");
+				emit gameOver();
 				reset();
 			}
 			else {
@@ -221,9 +199,6 @@ void QtGuiApplication3::drawCrossLine()
 		scene->addLine(-300 + dx, -300 + 40 * i + dy, 20 + dx, -300 + 40 * i + dy);
 		scene->addLine(-300 + 40 * i + dx, -300 + dy, -300 + 40 * i + dx, 20 + dy);
 	}
-	//QGraphicsTextItem *txtitem = new QGraphicsTextItem("hello");
-	//txtitem->setPos(QPointF(100,100));//设置要放置的的位置
-	//scene->addItem(txtitem);//添加item到scene上
 }
 
 void QtGuiApplication3::clear()
@@ -334,8 +309,6 @@ Point QtGuiApplication3::UctSearch()
 	{
 		count++;
 		Search(current);
-		//cout << count++ << endl;
-		//QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 
 	}
 	cout << count << endl;
@@ -578,5 +551,23 @@ Point QtGuiApplication3::getBestChild(unsigned int total, double value[][8],unsi
 		}
 	}
 	return ret;
+}
+
+void QtGuiApplication3::endMessage()
+{
+	int bcount = test->getCount(BLACK);
+	int wcount = test->getCount(WHITE);
+	if (bcount > wcount)
+	{
+		QMessageBox::warning(this, "warning", "BLACK WIN!", QMessageBox::Ok);
+	}
+	else if(bcount < wcount)
+	{
+		QMessageBox::warning(this, "warning", "WHITE WIN!", QMessageBox::Ok);
+	}
+	else
+	{
+		QMessageBox::warning(this, "warning", "TIED!", QMessageBox::Ok);
+	}
 }
 

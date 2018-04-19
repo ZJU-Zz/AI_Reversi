@@ -50,8 +50,12 @@ public:
 	Point getBestChild(unsigned int total, double value[][8],unsigned int playTime[][8]);
 	ReversiBoard* test;
 
+	void endMessage();
+
 signals:
 	void viewChanged();
+signals:
+	void gameOver();
 
 private:
 	double C = sqrt(2);
