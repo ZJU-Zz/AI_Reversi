@@ -333,6 +333,7 @@ Point QtGuiApplication3::UctSearch()
 		Search(current);
 		//cout << count++ << endl;
 		//QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+
 	}
 	cout << count << endl;
 	double value[8][8] = { 0 };
