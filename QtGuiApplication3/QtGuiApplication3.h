@@ -12,7 +12,8 @@
 #include <QTime>
 #include <math.h>
 #include <QThread>
-
+#include <QMutex>
+#include <QTimer>
 typedef struct point Point;
 struct point
 {
@@ -49,13 +50,24 @@ public:
 	void backUp(TreeNode next,Type win);
 	Point getBestChild(unsigned int total, double value[][8],unsigned int playTime[][8]);
 	ReversiBoard* test;
-
 	void endMessage();
+
+	void startTiming();
+	void endTiming();
+
+public slots:
+	void handleTimeout();  //超时处理函数  
 
 signals:
 	void viewChanged();
 signals:
 	void gameOver();
+
+signals:
+	void timingStart(); 
+signals:
+	void timingEnd();
+
 
 private:
 	double C = sqrt(2);
@@ -65,6 +77,12 @@ private:
 	LoadWriteNodes Tree;
 	qreal dx = 40;
 	qreal dy = 40;
+	QMutex mutex;
+	int oneStepTime = 0;
+	int totalTime = 0;
+	QTimer *m_pTimer;
+
+	char keyPressed;
 };
 
 //static const double C = sqrt(2);

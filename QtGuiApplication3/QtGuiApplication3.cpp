@@ -1,6 +1,6 @@
 #include "QtGuiApplication3.h"
 
-
+#define TIMER_TIMEOUT   1000
 
 
 QtGuiApplication3::QtGuiApplication3(QWidget *parent)
@@ -14,7 +14,6 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 	setStatusBar(0);
 	scene = new QGraphicsScene;
 	scene->setSceneRect(-200, -200, 600, 600);//设置场景大小  
-
 	drawCrossLine();//画棋盘  
 
 	view = new QGraphicsView;
@@ -31,34 +30,108 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 	setWindowTitle("Chess");//设置窗口标题
 	showView();
 
+
+	m_pTimer = new QTimer(this);
+	QObject::connect(m_pTimer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
+	//startTiming();
 }
+
+
+QGraphicsTextItem* totalTimeItem = NULL;
+QGraphicsTextItem* oneStepTimeItem = NULL;
+
+void QtGuiApplication3::handleTimeout()
+{
+	if (totalTimeItem) {
+		scene->removeItem(totalTimeItem);
+		delete totalTimeItem;
+	}
+	totalTimeItem = new QGraphicsTextItem("TotalTime:" + QString::number(++totalTime, 10));
+	totalTimeItem->setPos(QPointF(200,-250));//设置要放置的的位置
+	totalTimeItem->setScale(1.5);
+	scene->addItem(totalTimeItem);//添加item到scene上
+
+
+	if (oneStepTimeItem) {
+		scene->removeItem(oneStepTimeItem);
+		delete oneStepTimeItem;
+	}
+	oneStepTimeItem = new QGraphicsTextItem("OneStepTime:" + QString::number(++oneStepTime, 10));
+	oneStepTimeItem->setPos(QPointF(200, -200));//设置要放置的的位置
+	oneStepTimeItem->setScale(1.5);
+	scene->addItem(oneStepTimeItem);//添加item到scene上
+}
+
 
 
 void QtGuiApplication3::run()
 {
-	while (1)
-	{
-		Point nextPlay = UctSearch();
-		cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
-		if (nextPlay.x != -1) {
-			vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
-			test->doPlay(tt, nextPlay.x, nextPlay.y);
-			emit viewChanged();
-			//showView();
-		}
-		else
+	if (keyPressed == 'M') {
+		int ptime = 13;
+		while (ptime--)
 		{
-			if (test->isLeaf()) {
-				emit gameOver();
-				break;
+			if (mutex.tryLock(5000) == true)
+			{
+				while (1)
+				{
+					Point nextPlay = UctSearch();
+					cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
+					if (nextPlay.x != -1) {
+						vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
+						test->doPlay(tt, nextPlay.x, nextPlay.y);
+						emit viewChanged();
+						//showView();
+					}
+					else
+					{
+						if (test->isLeaf()) {
+							//emit gameOver();
+							test->reset();
+							emit viewChanged();
+							break;
+						}
+						else {
+							test->reversePlaying();
+							emit viewChanged();
+						}
+					}
+				}
+				mutex.unlock();
+				cout << "Training Ok!" << endl;
 			}
-			else {
-				test->reversePlaying();
-				emit viewChanged();
+			else
+			{
+				cout << "Lock error" << endl;
 			}
 		}
 	}
-	cout << "Training Ok!" << endl;
+	else if (keyPressed == 'A') {
+		if (mutex.tryLock(1000)) {
+			Point nextPlay = UctSearch();
+			cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
+			if (nextPlay.x != -1) {
+				vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
+				test->doPlay(tt, nextPlay.x, nextPlay.y);
+				emit viewChanged();
+			}
+			else
+			{
+				if (test->isLeaf()) {
+					emit gameOver();
+				}
+				else {
+					test->reversePlaying();
+					emit viewChanged();
+				}
+			}
+			mutex.unlock();
+		}
+		else
+		{
+			cout << "locked! Try again later!" << endl;
+		}
+		emit timingEnd();
+	}
 }
 
 void QtGuiApplication3::mousePressEvent(QMouseEvent *e)
@@ -117,42 +190,41 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 {
 	if (event->key() == Qt::Key_P)
 	{
-		if (test->isEnd()) {
-			emit gameOver();
-			reset();
+		if (mutex.tryLock(1000)) {
+			if (test->isEnd()) {
+				emit gameOver();
+			}
+			else
+			{
+				test->autoRandomPlayOneStep();
+				showView();
+			}
+			mutex.unlock();
 		}
 		else
 		{
-			test->autoRandomPlayOneStep();
-			showView();
+			cout << "locked! Try again later!" << endl;
 		}
+
 	}
 
 	if (event->key() == Qt::Key_A)
 	{
-		Point nextPlay = UctSearch();
-		cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
-		if (nextPlay.x != -1) {
-			vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
-			test->doPlay(tt, nextPlay.x, nextPlay.y);
-			showView();
-		}
-		else
-		{
-			if (test->isLeaf()) {
-				emit gameOver();
-				reset();
-			}
-			else {
-				test->reversePlaying();
-				showView();
-			}
-		}
+		emit timingStart();
+		keyPressed = 'A';
+		start();
 	}
 	if (event->key() == Qt::Key_R)
 	{
-		test->reversePlaying();
-		showView();
+		if (mutex.tryLock(1000)) {
+			test->reversePlaying();
+			showView();
+			mutex.unlock();
+		}
+		else
+		{
+			cout << "locked! Try again later!" << endl;
+		}
 	}
 	if (event->key() == Qt::Key_S)
 	{
@@ -170,16 +242,32 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 	}
 	if (event->key() == Qt::Key_M)
 	{
+		keyPressed = 'M';
 		start();
+		//emit timingEnd();
 	}
 	if (event->key() == Qt::Key_I)
 	{
-		reset();
+		if (mutex.tryLock(1000)) {
+			reset();
+			mutex.unlock();
+		}
+		else
+		{
+			cout << "locked! Try again later!" << endl;
+		}
 	}
 	if (event->key() == Qt::Key_K)
 	{
-		Point nextPlay = UctSearch();
-		cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
+		if (mutex.tryLock(1000)) {
+			Point nextPlay = UctSearch();
+			cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
+			mutex.unlock();
+		}
+		else
+		{
+			cout << "locked! Try again later!" << endl;
+		}
 	}
 }
 
@@ -207,7 +295,8 @@ void QtGuiApplication3::clear()
 	QList<QGraphicsItem*> list = scene->items();
 	while (!list.empty())
 	{
-		scene->removeItem(list.at(0));
+		if(list.at(0) != totalTimeItem && list.at(0) != oneStepTimeItem)
+			scene->removeItem(list.at(0));
 		list.removeAt(0);
 	}
 	drawCrossLine();
@@ -226,8 +315,9 @@ void QtGuiApplication3::addChess(int m, int n, Type type)
 
 void QtGuiApplication3::reset()
 {
+	totalTime = oneStepTime = 0;
 	test->reset();
-	showView();
+	emit viewChanged();
 }
 
 void QtGuiApplication3::showView()
@@ -253,6 +343,18 @@ void QtGuiApplication3::showView()
 	{
 		addChess(8, 8, WHITE);
 	}
+
+	addChess(1, 9, WHITE);
+	QGraphicsTextItem *txtitemWHITE = new QGraphicsTextItem(QString::number( test->getCount(WHITE), 10));
+	txtitemWHITE->setPos(QPointF(-170,93));//设置要放置的的位置
+	txtitemWHITE->setScale(1.5);
+	scene->addItem(txtitemWHITE);//添加item到scene上
+
+	addChess(1, 11, BLACK);
+	QGraphicsTextItem *txtitemBLACK = new QGraphicsTextItem(QString::number(test->getCount(BLACK), 10));
+	txtitemBLACK->setPos(QPointF(-170, 173));//设置要放置的的位置
+	txtitemBLACK->setScale(1.5);
+	scene->addItem(txtitemBLACK);//添加item到scene上
 
 }
 
@@ -303,7 +405,7 @@ void QtGuiApplication3::insertRoot()
 Point QtGuiApplication3::UctSearch()
 {
 	TreeNode current(test->getPlaying(), test->getBoard(), test->getBoard(), 0, 0, 0);
-	QTime reachTime = QTime::currentTime().addMSecs(1000 * 10);
+	QTime reachTime = QTime::currentTime().addMSecs(1000 * 5);
 	int count = 0;
 	while (QTime::currentTime() < reachTime)
 	{
@@ -568,6 +670,21 @@ void QtGuiApplication3::endMessage()
 	else
 	{
 		QMessageBox::warning(this, "warning", "TIED!", QMessageBox::Ok);
+	}
+}
+
+void QtGuiApplication3::startTiming()
+{
+	if (!m_pTimer->isActive()) {
+		oneStepTime = 0;
+		m_pTimer->start(TIMER_TIMEOUT);
+	}
+}
+
+void QtGuiApplication3::endTiming()
+{
+	if (m_pTimer->isActive()) {
+		m_pTimer->stop();
 	}
 }
 
