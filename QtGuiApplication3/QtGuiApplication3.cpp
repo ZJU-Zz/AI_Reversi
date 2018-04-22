@@ -33,6 +33,12 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 
 	m_pTimer = new QTimer(this);
 	QObject::connect(m_pTimer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
+
+	QObject::connect(this, &QtGuiApplication3::viewChanged, this, &QtGuiApplication3::showView);
+	QObject::connect(this, &QtGuiApplication3::gameOver, this, &QtGuiApplication3::endMessage);
+	QObject::connect(this, &QtGuiApplication3::timingStart, this, &QtGuiApplication3::startTiming);
+	QObject::connect(this, &QtGuiApplication3::timingEnd, this, &QtGuiApplication3::endTiming);
+
 	//startTiming();
 }
 
@@ -67,42 +73,36 @@ void QtGuiApplication3::handleTimeout()
 void QtGuiApplication3::run()
 {
 	if (keyPressed == 'M') {
-		int ptime = 13;
-		while (ptime--)
+		if (mutex.tryLock(5000) == true)
 		{
-			if (mutex.tryLock(5000) == true)
+			while (1)
 			{
-				while (1)
+				Point nextPlay = UctSearch();
+				cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
+				if (nextPlay.x != -1) {
+					vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
+					test->doPlay(tt, nextPlay.x, nextPlay.y);
+					emit viewChanged();
+				}
+				else
 				{
-					Point nextPlay = UctSearch();
-					cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
-					if (nextPlay.x != -1) {
-						vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
-						test->doPlay(tt, nextPlay.x, nextPlay.y);
+					if (test->isLeaf()) {
+						emit gameOver();
 						emit viewChanged();
-						//showView();
+						break;
 					}
-					else
-					{
-						if (test->isLeaf()) {
-							//emit gameOver();
-							test->reset();
-							emit viewChanged();
-							break;
-						}
-						else {
-							test->reversePlaying();
-							emit viewChanged();
-						}
+					else {
+						test->reversePlaying();
+						emit viewChanged();
 					}
 				}
-				mutex.unlock();
-				cout << "Training Ok!" << endl;
 			}
-			else
-			{
-				cout << "Lock error" << endl;
-			}
+			mutex.unlock();
+			cout << "Training Ok!" << endl;
+		}
+		else
+		{
+			cout << "Lock error" << endl;
 		}
 	}
 	else if (keyPressed == 'A') {
@@ -131,6 +131,44 @@ void QtGuiApplication3::run()
 			cout << "locked! Try again later!" << endl;
 		}
 		emit timingEnd();
+	}
+	else if (keyPressed = 'H')
+	{
+		int ptime = 13;
+		while (ptime--)
+		{
+			if (mutex.tryLock(5000) == true)
+			{
+				while (1)
+				{
+					Point nextPlay = UctSearch();
+					cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
+					if (nextPlay.x != -1) {
+						vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
+						test->doPlay(tt, nextPlay.x, nextPlay.y);
+						emit viewChanged();
+					}
+					else
+					{
+						if (test->isLeaf()) {
+							test->reset();
+							emit viewChanged();
+							break;
+						}
+						else {
+							test->reversePlaying();
+							emit viewChanged();
+						}
+					}
+				}
+				mutex.unlock();
+				cout << "Training Ok!" << endl;
+			}
+			else
+			{
+				cout << "Lock error" << endl;
+			}
+		}
 	}
 }
 
@@ -207,7 +245,11 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 		}
 
 	}
-
+	if (event->key() == Qt::Key_L)
+	{
+		test->takeBack();
+		showView();
+	}
 	if (event->key() == Qt::Key_A)
 	{
 		emit timingStart();
@@ -268,6 +310,11 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 		{
 			cout << "locked! Try again later!" << endl;
 		}
+	}
+	if (event->key() == Qt::Key_H)
+	{
+		keyPressed = 'H';
+		start();
 	}
 }
 
@@ -405,7 +452,7 @@ void QtGuiApplication3::insertRoot()
 Point QtGuiApplication3::UctSearch()
 {
 	TreeNode current(test->getPlaying(), test->getBoard(), test->getBoard(), 0, 0, 0);
-	QTime reachTime = QTime::currentTime().addMSecs(1000 * 5);
+	QTime reachTime = QTime::currentTime().addMSecs(1000 * 10);
 	int count = 0;
 	while (QTime::currentTime() < reachTime)
 	{

@@ -52,6 +52,8 @@ public:
 	ReversiBoard* test;
 	void endMessage();
 
+
+
 	void startTiming();
 	void endTiming();
 

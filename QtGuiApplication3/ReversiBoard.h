@@ -40,6 +40,8 @@ public:
 	Type getPlaying();
 	void reversePlaying();
 
+	void takeBack();
+
 	int getCount(Type p);
 
 	void autoRandomPlayOneStep();
@@ -54,7 +56,9 @@ public:
 private:
 	Type playing;
 	unsigned short int Board[8];
+	unsigned short int lastBoard[8];
 	int end = 0;
+	bool canRegret = false;
 };
 
 

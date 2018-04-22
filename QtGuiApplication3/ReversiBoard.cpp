@@ -43,6 +43,10 @@ vector<int> ReversiBoard::canPlay( int x, int y)
 
 void ReversiBoard::doPlay(vector<int> dir, int x, int y)
 {
+	for (int i = 0; i < 8; i++)
+	{
+		lastBoard[i] = Board[i];
+	}
 	int size = dir.size();
 	setType(playing, x, y);
 	for (int i = 0; i < size; i++)
@@ -65,6 +69,7 @@ void ReversiBoard::doPlay(vector<int> dir, int x, int y)
 		}
 	}
 	reversePlaying();
+	canRegret = true;
 }
 
 bool ReversiBoard::isValid(int x, int y)
@@ -101,6 +106,11 @@ void ReversiBoard::reset()
 	setType(BLACK, 4, 3);
 	playing = BLACK;
 	end = 0;
+
+	for (int i = 0; i < 8; i++)
+	{
+		lastBoard[i] = Board[i];
+	}
 }
 
 Type ReversiBoard::getPlaying()
@@ -111,6 +121,18 @@ Type ReversiBoard::getPlaying()
 void ReversiBoard::reversePlaying()
 {
 	playing = (playing == BLACK) ? WHITE : BLACK;
+}
+
+void ReversiBoard::takeBack()
+{
+	if (canRegret) {
+		reversePlaying();
+		for (int i = 0; i < 8; i++)
+		{
+			Board[i] = lastBoard[i];
+		}
+		canRegret = false;
+	}
 }
 
 int ReversiBoard::getCount(Type p)
@@ -280,6 +302,7 @@ Type ReversiBoard::getType(int x, int y)
 
 ReversiBoard::ReversiBoard()
 {
+
 }
 
 ReversiBoard::ReversiBoard(TreeNode n)
