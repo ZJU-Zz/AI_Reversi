@@ -22,6 +22,7 @@ struct point
 };
 
 class QtGuiApplication3 : public QMainWindow ,public QThread , public QObject
+
 {
 	Q_OBJECT
 

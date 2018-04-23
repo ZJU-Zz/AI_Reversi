@@ -132,7 +132,7 @@ void QtGuiApplication3::run()
 		}
 		emit timingEnd();
 	}
-	else if (keyPressed = 'H')
+	else if (keyPressed == 'H')
 	{
 		int ptime = 13;
 		while (ptime--)
@@ -168,6 +168,18 @@ void QtGuiApplication3::run()
 			{
 				cout << "Lock error" << endl;
 			}
+		}
+	}
+	else if (keyPressed == 'K')
+	{
+		if (mutex.tryLock(1000)) {
+			Point nextPlay = UctSearch();
+			cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
+			mutex.unlock();
+		}
+		else
+		{
+			cout << "locked! Try again later!" << endl;
 		}
 	}
 }
@@ -301,15 +313,8 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 	}
 	if (event->key() == Qt::Key_K)
 	{
-		if (mutex.tryLock(1000)) {
-			Point nextPlay = UctSearch();
-			cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
-			mutex.unlock();
-		}
-		else
-		{
-			cout << "locked! Try again later!" << endl;
-		}
+		keyPressed = 'K';
+		start();
 	}
 	if (event->key() == Qt::Key_H)
 	{
@@ -665,10 +670,16 @@ void QtGuiApplication3::backUp(TreeNode next, Type win)
 			//cout <<"ceshi ::" <<  newNode.w  << " "<< newNode.n << endl;
 			Tree.Nodes.erase(temp);
 			Tree.Nodes.insert(newNode);
-			if (newNode.parentBoard[0] == 0xFFFF) return;
-			Type pType = (next.playing == BLACK) ? WHITE : BLACK;
-			TreeNode parentNode = TreeNode(pType, newNode.parentBoard , newNode.parentBoard, 0 ,0 , 0);
-			backUp(parentNode, win);
+			//if (newNode.parentBoard[0] == 0xFFFF) return;
+			for (int i = 0; i < 8; i++)
+			{
+				if (newNode.parentBoard[i] != test->getBoard()[i]) {
+					Type pType = (next.playing == BLACK) ? WHITE : BLACK;
+					TreeNode parentNode = TreeNode(pType, newNode.parentBoard, newNode.parentBoard, 0, 0, 0);
+					backUp(parentNode, win);
+					break;
+				}
+			}
 		}
 		else
 		{
