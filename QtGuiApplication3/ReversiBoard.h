@@ -53,6 +53,7 @@ public:
 
 	bool isEnd();
 	unsigned short int* getBoard();
+	int count = 4;
 private:
 	Type playing;
 	unsigned short int Board[8];

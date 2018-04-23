@@ -70,6 +70,7 @@ void ReversiBoard::doPlay(vector<int> dir, int x, int y)
 	}
 	reversePlaying();
 	canRegret = true;
+	count++;
 }
 
 bool ReversiBoard::isValid(int x, int y)
@@ -111,6 +112,7 @@ void ReversiBoard::reset()
 	{
 		lastBoard[i] = Board[i];
 	}
+	count = 4;
 }
 
 Type ReversiBoard::getPlaying()

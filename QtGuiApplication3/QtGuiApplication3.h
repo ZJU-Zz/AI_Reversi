@@ -48,7 +48,7 @@ public:
 
 	Point UctSearch();
 	void Search(TreeNode next);
-	void backUp(TreeNode next,Type win);
+	void backUp(TreeNode next,Type win,int count);
 	Point getBestChild(unsigned int total, double value[][8],unsigned int playTime[][8]);
 	ReversiBoard* test;
 	void endMessage();
@@ -84,7 +84,6 @@ private:
 	int oneStepTime = 0;
 	int totalTime = 0;
 	QTimer *m_pTimer;
-
 	char keyPressed;
 };
 

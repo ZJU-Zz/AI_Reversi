@@ -571,8 +571,9 @@ void QtGuiApplication3::Search(TreeNode next)
 				{
 					Tree.Nodes.insert(a);
 					r.doPlay(temp, i, j);
+					int tempcount = r.count;
 					Type win = r.autoRandomPlay();
-					backUp(a, win);
+					backUp(a, win , tempcount);
 					//cout << "Play:"  << next.playing << " "<< i << " " << j << " " << win << endl;
 					return;
 				}
@@ -618,14 +619,14 @@ void QtGuiApplication3::Search(TreeNode next)
 			int bcount = r.getCount(BLACK);
 			int wcount = r.getCount(WHITE);
 			if (bcount > wcount) {
-				backUp(next, BLACK);
+				backUp(next, BLACK,r.count);
 			}
 			else if (bcount < wcount) {
-				backUp(next, WHITE);
+				backUp(next, WHITE,r.count);
 			}
 			else
 			{
-				backUp(next, EMPTY);
+				backUp(next, EMPTY,r.count);
 			}
 			return;
 		}
@@ -652,7 +653,7 @@ void QtGuiApplication3::Search(TreeNode next)
 	}
 }
 
-void QtGuiApplication3::backUp(TreeNode next, Type win)
+void QtGuiApplication3::backUp(TreeNode next, Type win,int count)
 {
 	//if (Tree.iter == Tree.Nodes.end()) return;
 	for (int i = 0;; i++)
@@ -671,15 +672,18 @@ void QtGuiApplication3::backUp(TreeNode next, Type win)
 			Tree.Nodes.erase(temp);
 			Tree.Nodes.insert(newNode);
 			//if (newNode.parentBoard[0] == 0xFFFF) return;
+			Type pType = (next.playing == BLACK) ? WHITE : BLACK;
+			TreeNode parentNode = TreeNode(pType, newNode.parentBoard, newNode.parentBoard, 0, 0, 0);
+			int flag = 0;
 			for (int i = 0; i < 8; i++)
 			{
-				if (newNode.parentBoard[i] != test->getBoard()[i]) {
-					Type pType = (next.playing == BLACK) ? WHITE : BLACK;
-					TreeNode parentNode = TreeNode(pType, newNode.parentBoard, newNode.parentBoard, 0, 0, 0);
-					backUp(parentNode, win);
+				if (newNode.parentBoard[i] != newNode.Board[i]) {
+						backUp(parentNode, win,count - 1);
+					flag = 1;
 					break;
 				}
 			}
+			if(flag == 0) backUp(parentNode, win, count);
 		}
 		else
 		{
