@@ -677,13 +677,13 @@ void QtGuiApplication3::backUp(TreeNode next, Type win,int count)
 			int flag = 0;
 			for (int i = 0; i < 8; i++)
 			{
-				if (newNode.parentBoard[i] != newNode.Board[i]) {
-						backUp(parentNode, win,count - 1);
+				if (newNode.parentBoard[i] != test->getBoard()[i]) {
+					backUp(parentNode, win,count - 1);
 					flag = 1;
 					break;
 				}
 			}
-			if(flag == 0) backUp(parentNode, win, count);
+			//if(flag == 0) backUp(parentNode, win, count);
 		}
 		else
 		{
