@@ -86,5 +86,3 @@ private:
 	QTimer *m_pTimer;
 	char keyPressed;
 };
-
-//static const double C = sqrt(2);

@@ -7,7 +7,6 @@ class LoadWriteNodes
 {
 public:
 	LoadWriteNodes();
-	//LoadWriteNodes(string FileName);
 	~LoadWriteNodes();
 	unordered_set<TreeNode, HashFunc, EqualKey> Nodes;
 	unordered_set<TreeNode, HashFunc, EqualKey>::iterator iter;

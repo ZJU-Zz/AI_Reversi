@@ -7,12 +7,6 @@
 #include "LoadWriteNodes.h"
 
 using namespace std;
-///enum Type
-//{
-//	EMPTY = 0,
-//	BLACK = 1,
-//	WHITE = 2
-//};
 
 
 static int direction[8][2] = {

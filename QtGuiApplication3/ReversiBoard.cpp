@@ -43,11 +43,12 @@ vector<int> ReversiBoard::canPlay( int x, int y)
 
 void ReversiBoard::doPlay(vector<int> dir, int x, int y)
 {
+	int size = dir.size();
+	if (size == 0) return;
 	for (int i = 0; i < 8; i++)
 	{
 		lastBoard[i] = Board[i];
 	}
-	int size = dir.size();
 	setType(playing, x, y);
 	for (int i = 0; i < size; i++)
 	{

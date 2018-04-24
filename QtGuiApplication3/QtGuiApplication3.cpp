@@ -9,8 +9,6 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 	test = new ReversiBoard();
 	test->reset();
 
-
-
 	setStatusBar(0);
 	scene = new QGraphicsScene;
 	scene->setSceneRect(-200, -200, 600, 600);//设置场景大小  
@@ -32,13 +30,14 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 
 
 	m_pTimer = new QTimer(this);
-	QObject::connect(m_pTimer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
 
+	QObject::connect(m_pTimer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
 	QObject::connect(this, &QtGuiApplication3::viewChanged, this, &QtGuiApplication3::showView);
 	QObject::connect(this, &QtGuiApplication3::gameOver, this, &QtGuiApplication3::endMessage);
 	QObject::connect(this, &QtGuiApplication3::timingStart, this, &QtGuiApplication3::startTiming);
 	QObject::connect(this, &QtGuiApplication3::timingEnd, this, &QtGuiApplication3::endTiming);
 
+	//temptest();
 	//startTiming();
 }
 
@@ -77,11 +76,11 @@ void QtGuiApplication3::run()
 		{
 			while (1)
 			{
-				Point nextPlay = UctSearch();
-				cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
-				if (nextPlay.x != -1) {
-					vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
-					test->doPlay(tt, nextPlay.x, nextPlay.y);
+				Point BestChild = UctSearch();
+				cout << "(" << BestChild.x << "," << BestChild.y << ")" << endl;
+				if (BestChild.x != -1) {
+					vector<int> CanPlayVector = test->canPlay(BestChild.x, BestChild.y);
+					test->doPlay(CanPlayVector, BestChild.x, BestChild.y);
 					emit viewChanged();
 				}
 				else
@@ -107,11 +106,11 @@ void QtGuiApplication3::run()
 	}
 	else if (keyPressed == 'A') {
 		if (mutex.tryLock(1000)) {
-			Point nextPlay = UctSearch();
-			cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
-			if (nextPlay.x != -1) {
-				vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
-				test->doPlay(tt, nextPlay.x, nextPlay.y);
+			Point BestChild = UctSearch();
+			cout << "(" << BestChild.x << "," << BestChild.y << ")" << endl;
+			if (BestChild.x != -1) {
+				vector<int> canPlayVector = test->canPlay(BestChild.x, BestChild.y);
+				test->doPlay(canPlayVector, BestChild.x, BestChild.y);
 				emit viewChanged();
 			}
 			else
@@ -134,18 +133,18 @@ void QtGuiApplication3::run()
 	}
 	else if (keyPressed == 'H')
 	{
-		int ptime = 13;
-		while (ptime--)
+		int PlayTime = 13;
+		while (PlayTime--)
 		{
 			if (mutex.tryLock(5000) == true)
 			{
 				while (1)
 				{
-					Point nextPlay = UctSearch();
-					cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
-					if (nextPlay.x != -1) {
-						vector<int> tt = test->canPlay(nextPlay.x, nextPlay.y);
-						test->doPlay(tt, nextPlay.x, nextPlay.y);
+					Point BestChild = UctSearch();
+					cout << "(" << BestChild.x << "," << BestChild.y << ")" << endl;
+					if (BestChild.x != -1) {
+						vector<int> CanPlayVector = test->canPlay(BestChild.x, BestChild.y);
+						test->doPlay(CanPlayVector, BestChild.x, BestChild.y);
 						emit viewChanged();
 					}
 					else
@@ -173,8 +172,8 @@ void QtGuiApplication3::run()
 	else if (keyPressed == 'K')
 	{
 		if (mutex.tryLock(1000)) {
-			Point nextPlay = UctSearch();
-			cout << "(" << nextPlay.x << "," << nextPlay.y << ")" << endl;
+			Point BestChild = UctSearch();
+			cout << "(" << BestChild.x << "," << BestChild.y << ")" << endl;
 			mutex.unlock();
 		}
 		else
@@ -188,7 +187,6 @@ void QtGuiApplication3::mousePressEvent(QMouseEvent *e)
 {
 	int m, n;
 
-	//cout << e->x() << " " << e->y() << endl;
 	int mx = e->x() - dx;
 	int my = e->y() - dy;
 	/*鼠标事件的坐标系是view,而不是scene*/
@@ -215,20 +213,20 @@ void QtGuiApplication3::mousePressEvent(QMouseEvent *e)
 	{
 		if (test->getPlaying() == BLACK)
 		{
-			vector<int> temp = test->canPlay(m, n);
-			if (temp.size() != 0) 
+			vector<int> CanPlayVector = test->canPlay(m, n);
+			if (CanPlayVector.size() != 0) 
 			{
-				test->doPlay(temp, m, n);
+				test->doPlay(CanPlayVector, m, n);
 				showView();
 			}
 			//添加黑棋  
 		}
 		else
 		{
-			vector<int> temp = test->canPlay(m, n);
-			if (temp.size() != 0)
+			vector<int> CanPlayVector = test->canPlay(m, n);
+			if (CanPlayVector.size() != 0)
 			{
-				test->doPlay(temp, m, n);
+				test->doPlay(CanPlayVector, m, n);
 				showView();
 			}
 			//添加白棋  
@@ -259,8 +257,15 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 	}
 	if (event->key() == Qt::Key_L)
 	{
-		test->takeBack();
-		showView();
+		if (mutex.tryLock(1000)) {
+			test->takeBack();
+			showView();
+			mutex.unlock();
+		}
+		else
+		{
+			cout << "locked! Try again later!" << endl;
+		}
 	}
 	if (event->key() == Qt::Key_A)
 	{
@@ -298,7 +303,6 @@ void QtGuiApplication3::keyPressEvent(QKeyEvent * event)
 	{
 		keyPressed = 'M';
 		start();
-		//emit timingEnd();
 	}
 	if (event->key() == Qt::Key_I)
 	{
@@ -422,19 +426,17 @@ void QtGuiApplication3::sleep(unsigned int msec)
 void QtGuiApplication3::temptest()
 {
 	reset();
-	test->setType(WHITE, 2, 2);
-	test->setType(WHITE, 2, 3);
-	test->setType(WHITE, 2, 4);
-	test->setType(WHITE, 3, 3);
-	test->setType(WHITE, 3, 4);
-	test->setType(WHITE, 4, 4);
 
-	test->setType(BLACK, 3, 1);
-	test->setType(BLACK, 4, 2);
-	test->setType(BLACK, 4, 3);
-	test->setType(BLACK, 5, 3);
+	test->getBoard()[0] = 0x0000;
+	test->getBoard()[1] = 0x0000;
+	test->getBoard()[2] = 0xaa80;
+	test->getBoard()[3] = 0x0240;
+	test->getBoard()[4] = 0x0250;
+	test->getBoard()[5] = 0x0254;
+	test->getBoard()[6] = 0x0000;
+	test->getBoard()[7] = 0x0000;
 
-
+	//test->reversePlaying();
 	showView();
 
 
@@ -468,31 +470,28 @@ Point QtGuiApplication3::UctSearch()
 	cout << count << endl;
 	double value[8][8] = { 0 };
 	unsigned int playTime[8][8] = { 0 };
-	unsigned int n = 0;
-	//test->printBoard();
-	//cout << test->getPlaying() << endl;
+	unsigned int TotalPlayTime = 0;
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
 			vector<int> temp = test->canPlay(i, j);
-			if (temp.size() != 0)
+			if (temp.size() > 0)
 			{
-				//cout << i << " " << j << "can play" << endl;
-				TreeNode a = test->getLeaf(temp, i, j);
+				TreeNode Child = test->getLeaf(temp, i, j);
 			Try:
-				Tree.iter = Tree.Nodes.find(a);
+				Tree.iter = Tree.Nodes.find(Child);
 				if (Tree.iter != Tree.Nodes.end())
 				{
 					for (int t = 0; t < 8; t++)
 					{
 						if (Tree.iter->parentBoard[t] != test->getBoard()[t])
 						{
-							a.parentIndex = Tree.iter->parentIndex + 1;
+							Child.parentIndex = Tree.iter->parentIndex + 1;
 							goto Try;
 						}
 					}
-					n += Tree.iter->n;
+					TotalPlayTime += Tree.iter->n;
 					if (Tree.iter->n != 0) {
 						value[i][j] = Tree.iter->w / (double)Tree.iter->n;
 						playTime[i][j] = Tree.iter->n;
@@ -501,16 +500,15 @@ Point QtGuiApplication3::UctSearch()
 				else
 				{
 					cout << "Error----------------------------------------------------" << endl;
+					cout << i  << " " << j << endl;
 					return Point();
 				}
 			}
 		}
 	}
 
-	//unsigned int maxVisit = 0;
 	Point ret;
-	ret.x = ret.y = -1;
-	cout << n << endl;
+	cout << TotalPlayTime << endl;
 	cout << "----------------------------------------" << endl;
 	for (int i = 0; i < 8; i++)
 	{
@@ -530,38 +528,37 @@ Point QtGuiApplication3::UctSearch()
 		cout << endl;
 	}
 	cout << "----------------------------------------" << endl;
-	ret = getBestChild(n, value, playTime);
+	ret = getBestChild(TotalPlayTime, value, playTime);
 	return ret;
 }
 
 void QtGuiApplication3::Search(TreeNode next)
 {
-	ReversiBoard r(next);
+	ReversiBoard TempBoard(next);
 	double value[8][8] = { 0 };
 	unsigned int playTime[8][8] = { 0 };
-	unsigned int n = 0;
+	unsigned int TotalPlayTime = 0;
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			vector<int> temp = r.canPlay(i, j);
+			vector<int> temp = TempBoard.canPlay(i, j);
 			if (temp.size() > 0)
 			{
-				//cout << "OK" << endl;
-				TreeNode a = r.getLeaf(temp, i, j);
+				TreeNode Child = TempBoard.getLeaf(temp, i, j);
 			Try:
-				Tree.iter = Tree.Nodes.find(a);
+				Tree.iter = Tree.Nodes.find(Child);
 				if (Tree.iter != Tree.Nodes.end())
 				{
 					for (int t = 0; t < 8; t++)
 					{
-						if (Tree.iter->parentBoard[i] != r.getBoard()[i])
+						if (Tree.iter->parentBoard[t] != TempBoard.getBoard()[t])
 						{
-							a.parentIndex = Tree.iter->parentIndex + 1;
+							Child.parentIndex = Tree.iter->parentIndex + 1;
 							goto Try;
 						}
 					}
-					n += Tree.iter->n;
+					TotalPlayTime += Tree.iter->n;
 					if (Tree.iter->n != 0) {
 						value[i][j] = Tree.iter->w / (double)Tree.iter->n;
 						playTime[i][j] = Tree.iter->n;
@@ -569,76 +566,50 @@ void QtGuiApplication3::Search(TreeNode next)
 				}
 				else
 				{
-					Tree.Nodes.insert(a);
-					r.doPlay(temp, i, j);
-					int tempcount = r.count;
-					Type win = r.autoRandomPlay();
-					backUp(a, win , tempcount);
-					//cout << "Play:"  << next.playing << " "<< i << " " << j << " " << win << endl;
+					Tree.Nodes.insert(Child);
+					TempBoard.doPlay(temp, i, j);
+					int tempcount = TempBoard.count;
+					Type win = TempBoard.autoRandomPlay();
+					backUp(Child, win , tempcount);
 					return;
 				}
 			}
 		}
 	}
-	/*
-	cout << n << endl;
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < 8; j++)
-		{
-			cout << playTime[i][j] << " ";
-		}
-		cout << endl;
-	}
-	for (int i = 0; i < 8; i++)
-	{
-	for (int j = 0; j < 8; j++)
-	{
-		cout << value[i][j] << " ";
-	}
-	cout << endl;
-	}
-	//Tree.printHash();
-	*/
 	
-	Point bestChild = getBestChild(n, value,playTime);
+	Point bestChild = getBestChild(TotalPlayTime, value,playTime);
 
 	if (bestChild.x != -1)
 	{
-		//cout << "bestchild::" << bestChild.x << " " << bestChild.y << endl;
-		//system("pause");
-		vector<int> playVector = r.canPlay(bestChild.x, bestChild.y);
-		Search(r.getLeaf(playVector, bestChild.x, bestChild.y));
+		vector<int> playVector = TempBoard.canPlay(bestChild.x, bestChild.y);
+		Search(TempBoard.getLeaf(playVector, bestChild.x, bestChild.y));
 	}
 	else
 	{
-		//cout << "Leaf---------------------------" << endl;
-		//cout << "nobestchild::" << bestChild.x << " " << bestChild.y << endl;
-		if (r.isLeaf()) {
-			//cout << "this is ture Leaf---------------------------" << endl;
-			int bcount = r.getCount(BLACK);
-			int wcount = r.getCount(WHITE);
+		if (TempBoard.isLeaf()) {
+			int bcount = TempBoard.getCount(BLACK);
+			int wcount = TempBoard.getCount(WHITE);
 			if (bcount > wcount) {
-				backUp(next, BLACK,r.count);
+				backUp(next, BLACK,TempBoard.count);
 			}
 			else if (bcount < wcount) {
-				backUp(next, WHITE,r.count);
+				backUp(next, WHITE,TempBoard.count);
 			}
 			else
 			{
-				backUp(next, EMPTY,r.count);
+				backUp(next, EMPTY,TempBoard.count);
 			}
 			return;
 		}
-		r.reversePlaying();
-		TreeNode pass(r.getPlaying() , r.getBoard(), r.getBoard(), 0, 0, 0);
+		TempBoard.reversePlaying();
+		TreeNode pass(TempBoard.getPlaying() , TempBoard.getBoard(), TempBoard.getBoard(), 0, 0, 0);
 		Try1:
 		Tree.iter = Tree.Nodes.find(pass);
 		if (Tree.iter != Tree.Nodes.end())
 		{
 			for (int t = 0; t < 8; t++)
 			{
-				if (Tree.iter->parentBoard[t] != r.getBoard()[t])
+				if (Tree.iter->parentBoard[t] != TempBoard.getBoard()[t])
 				{
 					pass.parentIndex = Tree.iter->parentIndex + 1;
 					goto Try1;
@@ -655,23 +626,20 @@ void QtGuiApplication3::Search(TreeNode next)
 
 void QtGuiApplication3::backUp(TreeNode next, Type win,int count)
 {
-	//if (Tree.iter == Tree.Nodes.end()) return;
 	for (int i = 0;; i++)
 	{
 		TreeNode temp = TreeNode(next.playing, next.Board, next.Board , 0, 0, i);
 		Tree.iter = Tree.Nodes.find(temp);
 		if (Tree.iter != Tree.Nodes.end())
 		{
-			//Tree.Nodes.erase(Tree.iter);
 			TreeNode newNode = TreeNode(next.playing, next.Board, (unsigned short int*)Tree.iter->parentBoard, Tree.iter->w , Tree.iter->n + 1 , i);
 			if (win == next.playing)
 			{
 				newNode.w++;
 			}
-			//cout <<"ceshi ::" <<  newNode.w  << " "<< newNode.n << endl;
 			Tree.Nodes.erase(temp);
 			Tree.Nodes.insert(newNode);
-			//if (newNode.parentBoard[0] == 0xFFFF) return;
+			if (newNode.parentBoard[0] == 0xFFFF) return;
 			Type pType = (next.playing == BLACK) ? WHITE : BLACK;
 			TreeNode parentNode = TreeNode(pType, newNode.parentBoard, newNode.parentBoard, 0, 0, 0);
 			int flag = 0;
