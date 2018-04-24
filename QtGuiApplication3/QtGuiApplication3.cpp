@@ -486,7 +486,7 @@ Point QtGuiApplication3::UctSearch()
 				{
 					for (int t = 0; t < 8; t++)
 					{
-						if (Tree.iter->parentBoard[i] != test->getBoard()[i])
+						if (Tree.iter->parentBoard[t] != test->getBoard()[t])
 						{
 							a.parentIndex = Tree.iter->parentIndex + 1;
 							goto Try;
@@ -675,15 +675,15 @@ void QtGuiApplication3::backUp(TreeNode next, Type win,int count)
 			Type pType = (next.playing == BLACK) ? WHITE : BLACK;
 			TreeNode parentNode = TreeNode(pType, newNode.parentBoard, newNode.parentBoard, 0, 0, 0);
 			int flag = 0;
-			for (int i = 0; i < 8; i++)
+			for (int t = 0; t < 8; t ++)
 			{
-				if (newNode.parentBoard[i] != test->getBoard()[i]) {
-					backUp(parentNode, win,count - 1);
+				if (newNode.parentBoard[t] != newNode.Board[t]) {
+					if(count - 1 >= test->count) backUp(parentNode, win,count - 1);
 					flag = 1;
 					break;
 				}
 			}
-			//if(flag == 0) backUp(parentNode, win, count);
+			if(flag == 0 && count >= test->count) backUp(parentNode, win, count);
 		}
 		else
 		{
