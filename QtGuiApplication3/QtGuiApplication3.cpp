@@ -642,6 +642,7 @@ void QtGuiApplication3::backUp(TreeNode next, Type win,int count)
 			if (newNode.parentBoard[0] == 0xFFFF) return;
 			Type pType = (next.playing == BLACK) ? WHITE : BLACK;
 			TreeNode parentNode = TreeNode(pType, newNode.parentBoard, newNode.parentBoard, 0, 0, 0);
+			/*
 			int flag = 0;
 			for (int t = 0; t < 8; t ++)
 			{
@@ -651,7 +652,9 @@ void QtGuiApplication3::backUp(TreeNode next, Type win,int count)
 					break;
 				}
 			}
-			if(flag == 0 && count >= test->count) backUp(parentNode, win, count);
+			if(flag == 0 && count >= test->count) 
+			*/
+			backUp(parentNode, win, count);
 		}
 		else
 		{

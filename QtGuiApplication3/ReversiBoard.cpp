@@ -317,6 +317,7 @@ ReversiBoard::ReversiBoard(TreeNode n)
 	playing = n.playing;
 	end = 0;
 	count = 0;
+	/*
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
@@ -324,6 +325,7 @@ ReversiBoard::ReversiBoard(TreeNode n)
 			if (getType(i, j) != EMPTY) count++;
 		}
 	}
+	*/
 }
 
 
