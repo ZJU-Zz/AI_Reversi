@@ -14,12 +14,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QTimer>
-typedef struct point Point;
-struct point
-{
-	int x;
-	int y;
-};
+
 
 class QtGuiApplication3 : public QMainWindow ,public QThread , public QObject
 
@@ -50,7 +45,9 @@ public:
 	void Search(TreeNode next);
 	void backUp(TreeNode next,Type win,int count);
 	Point getBestChild(unsigned int total, double value[][8],unsigned int playTime[][8]);
+
 	ReversiBoard* test;
+
 	void endMessage();
 
 
@@ -85,4 +82,8 @@ private:
 	int totalTime = 0;
 	QTimer *m_pTimer;
 	char keyPressed;
+
+
+	int ThreadNum = 2;
+	LoadWriteNodes** LW;
 };

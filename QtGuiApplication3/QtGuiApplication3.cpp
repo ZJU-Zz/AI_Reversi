@@ -39,6 +39,12 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 
 	//temptest();
 	//startTiming();
+
+	LW = (LoadWriteNodes**)malloc(sizeof(LoadWriteNodes*) * ThreadNum);
+	for (int i = 0; i < ThreadNum; i++)
+	{
+		LW[i] = new LoadWriteNodes(test->getBoard(), test->getPlaying(), test->count);
+	}
 }
 
 
@@ -458,6 +464,16 @@ void QtGuiApplication3::insertRoot()
 
 Point QtGuiApplication3::UctSearch()
 {
+
+
+	for (int i = 0; i < ThreadNum; i++)
+	{
+		LW[i]->changeCurrent(test->getBoard(), test->getPlaying(), test->count);
+	}
+
+	//LoadWriteNodes* Tree3 = new LoadWriteNodes(test->getBoard(), test->getPlaying(), test->count);
+	//LoadWriteNodes* Tree4 = new LoadWriteNodes(test->getBoard(), test->getPlaying(), test->count);
+/*
 	TreeNode current(test->getPlaying(), test->getBoard(), test->getBoard(), 0, 0, 0);
 	QTime reachTime = QTime::currentTime().addMSecs(1000 * 10);
 	int count = 0;
@@ -465,45 +481,71 @@ Point QtGuiApplication3::UctSearch()
 	{
 		count++;
 		Search(current);
-
 	}
 	cout << count << endl;
+	*/
+
+	for (int i = 0; i < ThreadNum; i++)
+	{
+		LW[i]->start();
+	}
+
+	for (int i = 0; i < ThreadNum; i++)
+	{
+		LW[i]->wait();
+	}
+
+
+
 	double value[8][8] = { 0 };
 	unsigned int playTime[8][8] = { 0 };
+	unsigned int wTime[8][8] = { 0 };
 	unsigned int TotalPlayTime = 0;
+	for (int ii = 0; ii < ThreadNum; ii++)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				vector<int> temp = test->canPlay(i, j);
+				if (temp.size() > 0)
+				{
+					TreeNode Child = test->getLeaf(temp, i, j);
+				Try:
+					LW[ii]->iter = LW[ii]->Nodes.find(Child);
+					if (LW[ii]->iter != LW[ii]->Nodes.end())
+					{
+						for (int t = 0; t < 8; t++)
+						{
+							if (LW[ii]->iter->parentBoard[t] != test->getBoard()[t])
+							{
+								Child.parentIndex = LW[ii]->iter->parentIndex + 1;
+								goto Try;
+							}
+						}
+						TotalPlayTime += LW[ii]->iter->n;
+						if (LW[ii]->iter->n != 0) {
+							wTime[i][j] += LW[ii]->iter->w;
+							playTime[i][j] += LW[ii]->iter->n;
+						}
+					}
+					else
+					{
+						cout << "Error----------------------------------------------------" << endl;
+						cout << i << " " << j << endl;
+						return Point();
+					}
+				}
+			}
+		}
+	}
+	
+
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			vector<int> temp = test->canPlay(i, j);
-			if (temp.size() > 0)
-			{
-				TreeNode Child = test->getLeaf(temp, i, j);
-			Try:
-				Tree.iter = Tree.Nodes.find(Child);
-				if (Tree.iter != Tree.Nodes.end())
-				{
-					for (int t = 0; t < 8; t++)
-					{
-						if (Tree.iter->parentBoard[t] != test->getBoard()[t])
-						{
-							Child.parentIndex = Tree.iter->parentIndex + 1;
-							goto Try;
-						}
-					}
-					TotalPlayTime += Tree.iter->n;
-					if (Tree.iter->n != 0) {
-						value[i][j] = Tree.iter->w / (double)Tree.iter->n;
-						playTime[i][j] = Tree.iter->n;
-					}
-				}
-				else
-				{
-					cout << "Error----------------------------------------------------" << endl;
-					cout << i  << " " << j << endl;
-					return Point();
-				}
-			}
+			if(playTime[i][j]!=0) value[i][j] = (double)wTime[i][j] / playTime[i][j];
 		}
 	}
 
@@ -529,6 +571,7 @@ Point QtGuiApplication3::UctSearch()
 	}
 	cout << "----------------------------------------" << endl;
 	ret = getBestChild(TotalPlayTime, value, playTime);
+
 	return ret;
 }
 

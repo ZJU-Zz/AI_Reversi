@@ -153,31 +153,19 @@ int ReversiBoard::getCount(Type p)
 
 void ReversiBoard::autoRandomPlayOneStep()
 {
-	vector<pair<int, int>> templist;
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 60; i++)
 	{
-		for (int j = 0; j < 8; j++)
-		{
-			templist.push_back(make_pair(i, j));
-		}
-	}
-	srand((unsigned)time(NULL));
-	for (int i = 63; i >= 0; i--)
-	{
-		int x = rand() % (i + 1);
-		int m = templist[x].first;
-		int n = templist[x].second;
-		templist.erase(templist.begin() + x);
+		int m = smartDirection[i][0];
+		int n = smartDirection[i][1];
+		cout << "(" << m << "," << n <<  ")" << endl;
 		vector<int> temp = canPlay(m, n);
 		if (temp.size() != 0)
 		{
-			templist.~vector();
 			doPlay(temp, m, n);
 			end = 0;
 			return;
 		}
 	}
-	templist.~vector();
 	end++;
 	if (end == 2)
 	{
@@ -192,31 +180,20 @@ void ReversiBoard::autoRandomPlayOneStep()
 
 Type ReversiBoard::autoRandomPlay()
 {
-	vector<pair<int, int>> templist;
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 60; i++)
 	{
-		for (int j = 0; j < 8; j++)
-		{
-			templist.push_back(make_pair(i, j));
-		}
-	}
-	srand((unsigned)time(NULL));
-	for (int i = 63; i >= 0; i--)
-	{
-		int x = rand() % (i + 1);
-		int m = templist[x].first;
-		int n = templist[x].second;
-		templist.erase(templist.begin() + x);
+		
+		int m = smartDirection[i][0];
+		int n = smartDirection[i][1];
+		//templist.erase(templist.begin() + x);
 		vector<int> temp = canPlay(m, n);
 		if (temp.size() != 0)
 		{
-			templist.~vector();
 			doPlay(temp, m, n);
 			end = 0;
 			return autoRandomPlay();
 		}
 	}
-	templist.~vector();
 	end++;
 	if (end == 2)
 	{
