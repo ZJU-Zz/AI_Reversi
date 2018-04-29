@@ -180,6 +180,7 @@ void ReversiBoard::autoRandomPlayOneStep()
 
 Type ReversiBoard::autoRandomPlay()
 {
+	/*
 	for (int i = 0; i < 60; i++)
 	{
 		
@@ -194,6 +195,56 @@ Type ReversiBoard::autoRandomPlay()
 			return autoRandomPlay();
 		}
 	}
+	end++;
+	if (end == 2)
+	{
+		int bcount = getCount(BLACK);
+		int wcount = getCount(WHITE);
+		if (bcount > wcount)
+		{
+			return BLACK;
+		}
+		else if (bcount < wcount)
+		{
+			return WHITE;
+		}
+		else
+		{
+			return EMPTY;
+		}
+	}
+	else
+	{
+		reversePlaying();
+		return autoRandomPlay();
+	}
+	*/
+
+	vector<pair<int, int>> templist;
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			templist.push_back(make_pair(i, j));
+		}
+	}
+	srand((unsigned)time(NULL));
+	for (int i = 63; i >= 0; i--)
+	{
+		int x = rand() % (i + 1);
+		int m = templist[x].first;
+		int n = templist[x].second;
+		templist.erase(templist.begin() + x);
+		vector<int> temp = canPlay(m, n);
+		if (temp.size() != 0)
+		{
+			templist.~vector();
+			doPlay(temp, m, n);
+			end = 0;
+			return autoRandomPlay();
+		}
+	}
+	templist.~vector();
 	end++;
 	if (end == 2)
 	{
