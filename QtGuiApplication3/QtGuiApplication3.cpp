@@ -51,7 +51,7 @@ QtGuiApplication3::QtGuiApplication3(QWidget *parent)
 QGraphicsTextItem* totalTimeItem = NULL;
 QGraphicsTextItem* oneStepTimeItem = NULL;
 
-void QtGuiApplication3::handleTimeout()
+void QtGuiApplication3::handleTimeout()	//用于计时器的更新，统计一步所用时间
 {
 	if (totalTimeItem) {
 		scene->removeItem(totalTimeItem);
@@ -75,10 +75,10 @@ void QtGuiApplication3::handleTimeout()
 
 
 
-void QtGuiApplication3::run()
+void QtGuiApplication3::run()	//另开线程处理CPU密集工作，与图形处理线程分开
 {
 	if (keyPressed == 'M') {
-		if (mutex.tryLock(5000) == true)
+		if (mutex.tryLock(5000) == true)	//加锁
 		{
 			while (1)
 			{
@@ -407,14 +407,14 @@ void QtGuiApplication3::showView()
 	}
 
 	addChess(1, 9, WHITE);
-	QGraphicsTextItem *txtitemWHITE = new QGraphicsTextItem(QString::number( test->getCount(WHITE), 10));
+	QGraphicsTextItem *txtitemWHITE = new QGraphicsTextItem(QString::number( test->getCount(WHITE), 10));	//白棋数量
 	txtitemWHITE->setPos(QPointF(-170,93));//设置要放置的的位置
 	txtitemWHITE->setScale(1.5);
 	scene->addItem(txtitemWHITE);//添加item到scene上
 
 	addChess(1, 11, BLACK);
-	QGraphicsTextItem *txtitemBLACK = new QGraphicsTextItem(QString::number(test->getCount(BLACK), 10));
-	txtitemBLACK->setPos(QPointF(-170, 173));//设置要放置的的位置
+	QGraphicsTextItem *txtitemBLACK = new QGraphicsTextItem(QString::number(test->getCount(BLACK), 10));	//黑棋数量
+	txtitemBLACK->setPos(QPointF(-170, 173));//设置要放置的的位置	
 	txtitemBLACK->setScale(1.5);
 	scene->addItem(txtitemBLACK);//添加item到scene上
 
@@ -427,25 +427,6 @@ void QtGuiApplication3::sleep(unsigned int msec)
 	{
 		QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 	}
-}
-
-void QtGuiApplication3::temptest()
-{
-	reset();
-
-	test->getBoard()[0] = 0x0000;
-	test->getBoard()[1] = 0x0000;
-	test->getBoard()[2] = 0xaa80;
-	test->getBoard()[3] = 0x0240;
-	test->getBoard()[4] = 0x0250;
-	test->getBoard()[5] = 0x0254;
-	test->getBoard()[6] = 0x0000;
-	test->getBoard()[7] = 0x0000;
-
-	//test->reversePlaying();
-	showView();
-
-
 }
 
 void QtGuiApplication3::insertRoot()
@@ -465,10 +446,10 @@ void QtGuiApplication3::insertRoot()
 Point QtGuiApplication3::UctSearch()
 {
 
-
+	cout << "start searching..." << endl;
 	for (int i = 0; i < ThreadNum; i++)
 	{
-		LW[i]->changeCurrent(test->getBoard(), test->getPlaying(), test->count);
+		LW[i]->changeCurrent(test->getBoard(), test->getPlaying(), test->count);	//改变每棵树的初始局面
 	}
 
 	//LoadWriteNodes* Tree3 = new LoadWriteNodes(test->getBoard(), test->getPlaying(), test->count);
@@ -487,21 +468,30 @@ Point QtGuiApplication3::UctSearch()
 
 	for (int i = 0; i < ThreadNum; i++)
 	{
-		LW[i]->start();
+		LW[i]->start();		//开始搜索
 	}
+
+	TreeNode current(test->getPlaying(), test->getBoard(), test->getBoard(), 0, 0, 0);
+	QTime reachTime = QTime::currentTime().addMSecs(1000 * 10);
+	int count = 0;
+	while (QTime::currentTime() < reachTime)	//主线程的搜索过程
+	{
+		count++;
+		Search(current);
+	}
+	cout << count << endl;
+
 
 	for (int i = 0; i < ThreadNum; i++)
 	{
-		LW[i]->wait();
+		LW[i]->wait();		//等待子线程结束
 	}
-
-
 
 	double value[8][8] = { 0 };
 	unsigned int playTime[8][8] = { 0 };
 	unsigned int wTime[8][8] = { 0 };
 	unsigned int TotalPlayTime = 0;
-	for (int ii = 0; ii < ThreadNum; ii++)
+	for (int ii = 0; ii < ThreadNum; ii++)	//其他线程的n和w统计
 	{
 		for (int i = 0; i < 8; i++)
 		{
@@ -510,20 +500,20 @@ Point QtGuiApplication3::UctSearch()
 				vector<int> temp = test->canPlay(i, j);
 				if (temp.size() > 0)
 				{
-					TreeNode Child = test->getLeaf(temp, i, j);
+					TreeNode Child = test->getLeaf(temp, i, j);	//得到子节点
 				Try:
 					LW[ii]->iter = LW[ii]->Nodes.find(Child);
 					if (LW[ii]->iter != LW[ii]->Nodes.end())
 					{
 						for (int t = 0; t < 8; t++)
 						{
-							if (LW[ii]->iter->parentBoard[t] != test->getBoard()[t])
+							if (LW[ii]->iter->parentBoard[t] != test->getBoard()[t])	//判断是否与当前局面相同
 							{
 								Child.parentIndex = LW[ii]->iter->parentIndex + 1;
-								goto Try;
+								goto Try;		//不想等则再次寻找
 							}
 						}
-						TotalPlayTime += LW[ii]->iter->n;
+						TotalPlayTime += LW[ii]->iter->n;	
 						if (LW[ii]->iter->n != 0) {
 							wTime[i][j] += LW[ii]->iter->w;
 							playTime[i][j] += LW[ii]->iter->n;
@@ -539,13 +529,50 @@ Point QtGuiApplication3::UctSearch()
 			}
 		}
 	}
-	
+
+
+	for (int i = 0; i < 8; i++)		//主线程的w和n统计
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			vector<int> temp = test->canPlay(i, j);
+			if (temp.size() > 0)
+			{
+				TreeNode Child = test->getLeaf(temp, i, j);
+			Try2:
+				Tree.iter = Tree.Nodes.find(Child);
+				if (Tree.iter != Tree.Nodes.end())
+				{
+					for (int t = 0; t < 8; t++)
+					{
+						if (Tree.iter->parentBoard[t] != test->getBoard()[t])
+						{
+							Child.parentIndex = Tree.iter->parentIndex + 1;
+							goto Try2;
+						}
+					}
+					TotalPlayTime += Tree.iter->n;
+					if (Tree.iter->n != 0) {
+						wTime[i][j] += Tree.iter->w;
+						playTime[i][j] += Tree.iter->n;
+					}
+				}
+				else
+				{
+					cout << "Error----------------------------------------------------" << endl;
+					cout << i << " " << j << endl;
+					return Point();
+				}
+			}
+		}
+	}
+
 
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			if(playTime[i][j]!=0) value[i][j] = (double)wTime[i][j] / playTime[i][j];
+			if(playTime[i][j]!=0) value[i][j] = (double)wTime[i][j] / playTime[i][j];		//统计胜率
 		}
 	}
 
@@ -570,7 +597,7 @@ Point QtGuiApplication3::UctSearch()
 		cout << endl;
 	}
 	cout << "----------------------------------------" << endl;
-	ret = getBestChild(TotalPlayTime, value, playTime);
+	ret = getBestChild(TotalPlayTime, value, playTime);			//根据函数取得最好的子节点
 
 	return ret;
 }
@@ -607,29 +634,29 @@ void QtGuiApplication3::Search(TreeNode next)
 						playTime[i][j] = Tree.iter->n;
 					}
 				}
-				else
+				else            //如果找不到，则插入一个新的TreeNode
 				{
 					Tree.Nodes.insert(Child);
 					TempBoard.doPlay(temp, i, j);
 					int tempcount = TempBoard.count;
-					Type win = TempBoard.autoRandomPlay();
-					backUp(Child, win , tempcount);
+					Type win = TempBoard.autoRandomPlay();			//随机下完，返回结果
+					backUp(Child, win , tempcount);				//backpropagation
 					return;
 				}
 			}
 		}
 	}
 	
-	Point bestChild = getBestChild(TotalPlayTime, value,playTime);
+	Point bestChild = getBestChild(TotalPlayTime, value,playTime);		//得到最好的子节点
 
-	if (bestChild.x != -1)
+	if (bestChild.x != -1)		
 	{
 		vector<int> playVector = TempBoard.canPlay(bestChild.x, bestChild.y);
-		Search(TempBoard.getLeaf(playVector, bestChild.x, bestChild.y));
+		Search(TempBoard.getLeaf(playVector, bestChild.x, bestChild.y));		//递归搜索
 	}
-	else
+	else        //如果等于-1则代表没有子节点
 	{
-		if (TempBoard.isLeaf()) {
+		if (TempBoard.isLeaf()) {		//判断是否是游戏终点，如果不是则跳过让对方下
 			int bcount = TempBoard.getCount(BLACK);
 			int wcount = TempBoard.getCount(WHITE);
 			if (bcount > wcount) {
@@ -644,7 +671,7 @@ void QtGuiApplication3::Search(TreeNode next)
 			}
 			return;
 		}
-		TempBoard.reversePlaying();
+		TempBoard.reversePlaying();		//翻转
 		TreeNode pass(TempBoard.getPlaying() , TempBoard.getBoard(), TempBoard.getBoard(), 0, 0, 0);
 		Try1:
 		Tree.iter = Tree.Nodes.find(pass);
@@ -661,9 +688,9 @@ void QtGuiApplication3::Search(TreeNode next)
 		}
 		else
 		{
-			Tree.Nodes.insert(pass);
+			Tree.Nodes.insert(pass);		//插入跳过的下法
 		}
-		Search(pass);
+		Search(pass);		//搜索跳过之后的局面
 	}
 }
 
@@ -682,14 +709,14 @@ void QtGuiApplication3::backUp(TreeNode next, Type win,int count)
 			}
 			Tree.Nodes.erase(temp);
 			Tree.Nodes.insert(newNode);
-			if (newNode.parentBoard[0] == 0xFFFF) return;
+			if (newNode.parentBoard[0] == 0xFFFF) return;		//代表这是全树的root节点
 			Type pType = (next.playing == BLACK) ? WHITE : BLACK;
 			TreeNode parentNode = TreeNode(pType, newNode.parentBoard, newNode.parentBoard, 0, 0, 0);
 			int flag = 0;
 			for (int t = 0; t < 8; t ++)
 			{
 				if (newNode.parentBoard[t] != newNode.Board[t]) {
-					if(count - 1 >= test->count) backUp(parentNode, win,count - 1);
+					if(count - 1 >= test->count) backUp(parentNode, win,count - 1);		//为了提高速度，回溯深度限制，不需要回溯到最上面的root节点，只需要回溯到当前局面深度即可
 					flag = 1;
 					break;
 				}

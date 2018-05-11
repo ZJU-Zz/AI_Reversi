@@ -38,7 +38,6 @@ public:
 	void showView();
 	void sleep(unsigned int msec);
 
-	void temptest();
 	void insertRoot();
 
 	Point UctSearch();
@@ -82,8 +81,6 @@ private:
 	int totalTime = 0;
 	QTimer *m_pTimer;
 	char keyPressed;
-
-
-	int ThreadNum = 2;
+	int ThreadNum = 1;
 	LoadWriteNodes** LW;
 };

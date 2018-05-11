@@ -4,6 +4,7 @@
 #include "ReversiBoard.h"
 #include <QThread>
 #include <QTime>
+#include <QReadWriteLock>
 using namespace std;
 
 typedef struct point Point;
@@ -24,7 +25,6 @@ public:
 	unordered_set<TreeNode, HashFunc, EqualKey>::iterator iter;
 
 	virtual void run();
-	Point UctSearch();
 	void Search(TreeNode next);
 	void backUp(TreeNode next, Type win, int count);
 	Point getBestChild(unsigned int total, double value[][8], unsigned int playTime[][8]);
@@ -37,6 +37,7 @@ private:
 	unsigned short int* Board;
 	Type playing;
 	int c_count;
+	bool need_store = false;
 };
 
 

@@ -49,7 +49,6 @@ struct HashFunc
 		for (int i = 0; i < 8; i++)
 		{
 			res ^= key.Board[i];
-			//res ^= key.parentBoard[i];
 		}
 		res ^= (int)key.playing;
 		res ^= key.parentIndex;

@@ -1,13 +1,17 @@
 #include "ReversiBoard.h"
 
-bool ReversiBoard::setType(Type t, int x, int y)
+void ReversiBoard::setType(Type t, int x, int y)
 {
 	Board[x] &= (~(0x3 << ((7 - y) * 2)));
 	Board[x] |= (int)t << ((7 - y) * 2);
-	return true;
+}
+Type ReversiBoard::getType(int x, int y)
+{
+	int temp = Board[x] >> ((7 - y) * 2) & 0x3;
+	return (Type)temp;
 }
 
-vector<int> ReversiBoard::canPlay( int x, int y)
+vector<int> ReversiBoard::canPlay( int x, int y)	//判断是否可下
 {
 	vector<int> a;
 	if (getType(x, y) != EMPTY) return a;
@@ -41,7 +45,7 @@ vector<int> ReversiBoard::canPlay( int x, int y)
 	return a;
 }
 
-void ReversiBoard::doPlay(vector<int> dir, int x, int y)
+void ReversiBoard::doPlay(vector<int> dir, int x, int y)		//下一步
 {
 	int size = dir.size();
 	if (size == 0) return;
@@ -153,6 +157,7 @@ int ReversiBoard::getCount(Type p)
 
 void ReversiBoard::autoRandomPlayOneStep()
 {
+	/*
 	for (int i = 0; i < 60; i++)
 	{
 		int m = smartDirection[i][0];
@@ -176,6 +181,42 @@ void ReversiBoard::autoRandomPlayOneStep()
 		reversePlaying();
 		return;
 	}
+	*/
+	vector<pair<int, int>> templist;
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			templist.push_back(make_pair(i, j));
+		}
+	}
+	srand((unsigned)time(NULL));
+	for (int i = 63; i >= 0; i--)
+	{
+		int x = rand() % (i + 1);
+		int m = templist[x].first;
+		int n = templist[x].second;
+		templist.erase(templist.begin() + x);
+		vector<int> temp = canPlay(m, n);
+		if (temp.size() != 0)
+		{
+			templist.~vector();
+			doPlay(temp, m, n);
+			end = 0;
+			return;
+		}
+	}
+	templist.~vector();
+	end++;
+	if (end == 2)
+	{
+		return;
+	}
+	else
+	{
+		reversePlaying();
+		return;
+	}
 }
 
 Type ReversiBoard::autoRandomPlay()
@@ -186,7 +227,6 @@ Type ReversiBoard::autoRandomPlay()
 		
 		int m = smartDirection[i][0];
 		int n = smartDirection[i][1];
-		//templist.erase(templist.begin() + x);
 		vector<int> temp = canPlay(m, n);
 		if (temp.size() != 0)
 		{
@@ -218,8 +258,8 @@ Type ReversiBoard::autoRandomPlay()
 		reversePlaying();
 		return autoRandomPlay();
 	}
+	
 	*/
-
 	vector<pair<int, int>> templist;
 	for (int i = 0; i < 8; i++)
 	{
@@ -325,11 +365,6 @@ unsigned short int* ReversiBoard::getBoard()
 	return Board;
 }
 
-Type ReversiBoard::getType(int x, int y)
-{
-	int temp = Board[x] >> ((7 - y) * 2) & 0x3;
-	return (Type)temp;
-}
 
 ReversiBoard::ReversiBoard()
 {

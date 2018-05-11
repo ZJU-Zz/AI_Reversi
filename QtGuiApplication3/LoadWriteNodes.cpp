@@ -9,9 +9,9 @@ LoadWriteNodes::LoadWriteNodes(unsigned short int * Board, Type playing,int coun
 
 LoadWriteNodes::LoadWriteNodes()
 {
-	
+	need_store = true;
 	ifstream in = ifstream(FileName, std::ios::binary);
-	if (!in.is_open())
+	if (!in.is_open())	//如果文件不存在，则在树中插入一个初始节点，即刚开始的棋面
 	{
 		TreeNode root;
 		root.n = root.w = root.parentIndex = 0;
@@ -38,6 +38,7 @@ LoadWriteNodes::LoadWriteNodes()
 
 LoadWriteNodes::~LoadWriteNodes()
 {
+	if (!need_store) return;
 	ofstream out = ofstream(FileName, std::ios::binary);
 	iter = Nodes.begin();
 	while (iter != Nodes.end())
@@ -82,6 +83,8 @@ void LoadWriteNodes::run()
 	cout << count << endl;
 }
 
+
+//Search部分与QtGuiApplicaton3.cpp中的search一致
 void LoadWriteNodes::Search(TreeNode next)
 {
 	ReversiBoard TempBoard(next);
@@ -132,7 +135,7 @@ void LoadWriteNodes::Search(TreeNode next)
 	if (bestChild.x != -1)
 	{
 		vector<int> playVector = TempBoard.canPlay(bestChild.x, bestChild.y);
-		Search(TempBoard.getLeaf(playVector, bestChild.x, bestChild.y));
+		Search(TempBoard.getLeaf(playVector, bestChild.x, bestChild.y ));
 	}
 	else
 	{
@@ -189,14 +192,14 @@ void LoadWriteNodes::backUp(TreeNode next, Type win, int count)
 			}
 			Nodes.erase(temp);
 			Nodes.insert(newNode);
-			if (newNode.parentBoard[0] == 0xFFFF) return;
+			if (newNode.parentBoard[0] == 0xFFFF) return;	//代表这是全树的root节点
 			Type pType = (next.playing == BLACK) ? WHITE : BLACK;
 			TreeNode parentNode = TreeNode(pType, newNode.parentBoard, newNode.parentBoard, 0, 0, 0);
 			int flag = 0;
 			for (int t = 0; t < 8; t++)
 			{
 				if (newNode.parentBoard[t] != newNode.Board[t]) {
-					if (count - 1 >= c_count) backUp(parentNode, win, count - 1);
+					if (count - 1 >= c_count) backUp(parentNode, win, count - 1);//为了提高速度，回溯深度限制，不需要回溯到最上面的root节点，只需要回溯到当前局面深度即可
 					flag = 1;
 					break;
 				}
